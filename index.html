@@ -381,21 +381,13 @@ h1{
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-  function list(node) {
-    return fetch(RTDB + '/' + node + '.json', { method: 'GET' }).then(function (r) {
+  /* Both node types are privacy-locked and keyed by their own id, so a lookup is
+     always ONE direct read: the node can never be bulk-downloaded by a visitor. */
+  function find(node, id) {
+    return fetch(RTDB + '/' + node + '/' + encodeURIComponent(id) + '.json', { method: 'GET' }).then(function (r) {
+      if (r.status === 401 || r.status === 403 || r.status === 404) return null;
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
-    });
-  }
-  function find(node, id) {
-    return list(node).then(function (data) {
-      if (!data || typeof data !== 'object') return null;
-      var keys = Object.keys(data);
-      for (var i = 0; i < keys.length; i++) {
-        var rec = data[keys[i]];
-        if (rec && String(rec.appId || '') === String(id)) return rec;
-      }
-      return null;
     });
   }
   function when(v) {
